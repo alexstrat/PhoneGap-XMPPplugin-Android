@@ -19,31 +19,23 @@ xmpp.prototype = {
       'login',
       [login, password]);
     },
-    
-    setAvailable : function(successCallback, failureCallback) {
+   
+
+    sendStanza : function(stanza, successCallback, failureCallback) {
       return PhoneGap.exec(
         successCallback,
         failureCallback,
         'XMPPPhoneGapPlugin',
-        'setAvailable',
-        []);
+        'sendStanza',
+        [stanza]);
     },
     
-    sendMessage : function(dest, content, successCallback, failureCallback) {
+    onStanza : function(successCallback, failureCallback) {
       return PhoneGap.exec(
         successCallback,
         failureCallback,
         'XMPPPhoneGapPlugin',
-        'sendMessage',
-        [dest, content]);
-    },
-    
-    onMessage : function(successCallback, failureCallback) {
-      return PhoneGap.exec(
-        successCallback,
-        failureCallback,
-        'XMPPPhoneGapPlugin',
-        'onMessage',
+        'onStanza',
         []);
     }
   };

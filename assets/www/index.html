@@ -44,7 +44,6 @@
             function() {
               xmpp.login(login, password,
                 function() {
-                  xmpp.setAvailable();
                   $.mobile.changePage($("#chatPage"));
                 }, 
                 function(){}
@@ -54,9 +53,8 @@
           );
         });
 
-        xmpp.onMessage(function(mess) {
-          if(typeof mess.content == 'undefined') return;
-          $("#incomingMessages").append(messageHTML(mess.src, mess.content));
+        xmpp.onStanza(function(mess) {
+          $("#incomingMessages").text(mess.stanza);
           $("#incomingMessages").scrollTop($("#incomingMessages")[0].scrollHeight);
         });
 
@@ -64,7 +62,10 @@
           var recipient = $("#recipient").val().trim();
           var message = $("#message").val();
           $("#incomingMessages").append(messageHTML("ME", message));
-          xmpp.sendMessage(recipient, message);
+          stanza = ["<message type=\"chat\" to=\""+recipient+"\">",
+                    "<body>"+message+"</body>",
+                    "</message>"].join("");
+          xmpp.sendStanza(stanza);
         });
  
       });

@@ -6,6 +6,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
+import org.jivesoftware.smack.filter.PacketTypeFilter;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
@@ -25,9 +27,8 @@ public class XMPPPhoneGapPlugin extends Plugin implements PacketListener {
 	private enum Action {
 		connect("connect"), 
 		login("login"), 
-		setAvailable("setAvailable"), 
-		sendMessage("sendMessage"),
-		onMessage("onMessage");
+		onStanza("onStanza"),
+		sendStanza("sendStanza");
 		
 		protected String label;
 		Action(String label) {
@@ -63,21 +64,18 @@ public class XMPPPhoneGapPlugin extends Plugin implements PacketListener {
 				Log.e("xmppPlugin", "login FAIL", e);
 				return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
 			}
+
+		case sendStanza :
+				try {
+					String xml = data.getString(0);
+					
+					return this.actionSendStanza(xml);
+				} catch(JSONException e) {
+					return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+				}
 			
-		case setAvailable :
-			return this.actionPresenceAvailable();
 			
-		case sendMessage :
-			try {
-				String dest = data.getString(0);
-				String content = data.getString(1);
-				
-				return this.actionSendMessage(dest, content);
-			} catch(JSONException e) {
-				return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
-			}
-			
-		case onMessage : 	
+		case onStanza : 	
 			//TODO handle more than one call back
 			this.listener_callbackID = callbackID;
 			
@@ -89,6 +87,7 @@ public class XMPPPhoneGapPlugin extends Plugin implements PacketListener {
 			return new PluginResult(PluginResult.Status.INVALID_ACTION);
 		}
 	}
+	
 	
 	private PluginResult actionConnect(String host, int port, String service) {
 		ConnectionConfiguration config = new ConnectionConfiguration(host, port, service);
@@ -104,49 +103,39 @@ public class XMPPPhoneGapPlugin extends Plugin implements PacketListener {
 	
 	private PluginResult actionLogin(String login, String password) {
 		try {
-			this.m_connection.login(login, password);
-			
-			PacketFilter filter = new MessageTypeFilter(Message.Type.chat);
-			this.m_connection.addPacketListener(this, filter);
-			
-			Log.i("xmppPlugin", "login OK");
 
-			return new PluginResult(PluginResult.Status.OK);
+			this.m_connection.addPacketListener(this, new PacketFilter() {
+				public boolean accept(Packet arg0) {
+					return true;
+				}
+			});
+			this.m_connection.login(login, password);
+			//Log.i("xmppPlugin", "login OK"); 
+			return new PluginResult(PluginResult.Status.OK); 
 
 		} catch (XMPPException e) {
-			Log.e("xmppPlugin", "login FAIL", e);
-
+			//Log.e("xmppPlugin", "login FAIL", e);
 			return new PluginResult(PluginResult.Status.ERROR);
 		}
 
 	}
 	
-	private PluginResult actionPresenceAvailable() {
-			Presence presence = new Presence(Presence.Type.available);
-			m_connection.sendPacket(presence);	
-			Log.i("XMPPPlugin", "presence sent");
-			return new PluginResult(PluginResult.Status.OK);
-	}
-	
-	private PluginResult actionSendMessage(String dest, String content) {
-		Message msg = new Message(dest, Message.Type.chat);
-		msg.setBody(content);
-		m_connection.sendPacket(msg);
+	private PluginResult actionSendStanza(String xml) {
+		Packet stanza = new Stanza(xml);
 		
+		m_connection.sendPacket(stanza);
 		return new PluginResult(PluginResult.Status.OK);
 	}
+
 
 	@Override
 	public void processPacket(Packet packet) {
 		
-		Message message = (Message) packet;
-		String fromName = StringUtils.parseBareAddress(message
-				.getFrom());
 		
 		try {
             JSONObject obj = new JSONObject();
-            obj.put("src", fromName);
-            obj.put("content", message.getBody());
+            obj.put("stanza", packet.toXML());
+            //Log.i("receive", packet.toXML());
             
             if (this.listener_callbackID != null) {
                 PluginResult result = new PluginResult(PluginResult.Status.OK, obj);
