@@ -1,0 +1,125 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Basic Chat</title>
+<link rel="stylesheet" href="jquery.mobile-1.0.min.css" /> 
+<script src="jquery-1.7.1.min.js"></script> 
+<script src="jquery.mobile-1.0.min.js"></script>
+
+<script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+<script type="text/javascript" charset="utf-8" src="XMPPPhoneGapPlugin.js"></script>
+<style>
+      .message
+      {
+        padding: 5px 5px 5px 5px;
+      }
+      .username
+      {
+        font-weight: bold;
+        color: #FCA44B;
+      }
+      .msgContainerDiv
+      {
+        overflow-y: scroll;
+        height: 250px;
+      }
+</style>
+
+<script>
+  document.addEventListener('deviceready', function() {
+      $(document).ready(function() {
+        function messageHTML(jid, content) {
+          return "<div class='message'><span class='username'>" + jid + ":</span> " + content + "</div>";
+        } 
+
+        var xmpp = window.plugins.xmpp;
+
+        $("#loginButton").click(function() {
+          var login = $("#login").val().trim();
+          var password = $("#password").val().trim();
+
+          $.mobile.loadingMessage = "connection..."
+          $.mobile.showPageLoadingMsg();
+          xmpp.connect("jabber.org", 5222, "jabber.org",
+            function() {
+              xmpp.login(login, password,
+                function() {
+                  xmpp.setAvailable();
+                  $.mobile.changePage($("#chatPage"));
+                }, 
+                function(){}
+              );
+            },
+            function(){}
+          );
+        });
+
+        xmpp.onMessage(function(mess) {
+          if(typeof mess.content == 'undefined') return;
+          $("#incomingMessages").append(messageHTML(mess.src, mess.content));
+          $("#incomingMessages").scrollTop($("#incomingMessages")[0].scrollHeight);
+        });
+
+        $("#sendButton").click(function() {
+          var recipient = $("#recipient").val().trim();
+          var message = $("#message").val();
+          $("#incomingMessages").append(messageHTML("ME", message));
+          xmpp.sendMessage(recipient, message);
+        });
+ 
+      });
+  });
+</script>
+</head>
+  <body> 
+ 
+    <div id="homePage" data-role="page" data-role="page" data-theme="b">
+        <div data-role="header">
+        
+            <h1>Chat</h1>
+        </div>
+ 
+        <div data-role="content">
+        <div data-role="fieldcontain">
+            <label for="login"><strong>Login</strong></label>
+            <input type="text" name="login" id="login" value="" />
+
+            <label for="password"><strong>Password</strong></label>
+            <input type="password" name="password" id="password" value=""  />
+            
+            <button id="loginButton" data-inline="true">Login</button>
+        </div>
+        </div>
+ 
+        <div data-role="footer">
+            <h4>made with jQuery Mobile</h4>
+        </div>
+    </div>
+
+    <div id="chatPage" data-role="page" data-theme="b">
+ 
+        <div data-role="header">
+            <h1>Chat</h1> 
+        </div>
+ 
+        <div data-role="content">
+        <div id="incomingMessages" name="incomingMessages" class="msgContainerDiv" ></div>
+        <label for="messageDst"><strong>Recipient</strong></label>
+        <input type="text" name="recipient" id="recipient" value="" />
+
+        <label for="message"><strong>Message</strong></label>
+        <textarea name="message" id="message"></textarea>
+ 
+        <fieldset class="ui-grid-a">
+            <div class="ui-block-a"><a href="#" data-role="button" data-rel="back">Go Back</a></div>
+            <div class="ui-block-b"><button data-theme="a" id="sendButton" name="sendButton">Send</input>
+        </fieldset>
+        </div>
+ 
+        <div data-role="footer">
+            <h4>made with jQuery Mobile</h4>
+        </div>
+    </div>
+
+  </body>
+</html>

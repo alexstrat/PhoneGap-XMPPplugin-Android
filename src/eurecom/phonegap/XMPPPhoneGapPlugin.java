@@ -1,4 +1,4 @@
-package com.mobserv.phonegap.xmpp;
+package eurecom.phonegap;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.PacketListener;
