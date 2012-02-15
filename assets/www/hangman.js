@@ -259,8 +259,6 @@
   }
 }(this));
 
-window.xmpp = new Strophe.Connection(window.plugins.xmpp);
-
 var MAX_TRIES = 10;
 
 var Guesser = function(xmpp) {
@@ -302,8 +300,9 @@ Guesser.prototype.play = function(letter) {
 Guesser.prototype.handler = function(response) {
   try {
     response = response.getElementsByTagName("body")[0].textContent;
+    response = response.replace(/&quot;/g, "\"")
+                       .replace(/&amp;/g, "&");
     response = JSON.parse(response);
-    console.log(response);
     this.emit(response.type, response);
   } catch(e) {
     console.error(e);
@@ -356,7 +355,6 @@ Master.prototype.extractWord = function(word) {
   this.wordToFound[0] = firstLetter;
   this.found.push(firstLetter);
   this.found.push(lastLetter);
-  return letters;
 };
 
 Master.prototype.extractPositions = function(letter) {
@@ -372,6 +370,8 @@ Master.prototype.extractPositions = function(letter) {
 Master.prototype.handler = function(request) {
   try {
     request = request.getElementsByTagName("body")[0].textContent;
+    request = request.replace(/&quot;/g, "\"")
+                     .replace(/&amp;/g, "&");
     request = JSON.parse(request);
     if (request.letter) {
       this.handleLetter(request.letter);
@@ -394,6 +394,7 @@ Master.prototype.handleStart = function(opponent) {
                .c("body")
                .t(JSON.stringify(json));
   this.xmpp.send(stanza);
+  this.emit("start", json);
 };
 
 Master.prototype.handleLetter = function(letter) {
@@ -415,7 +416,7 @@ Master.prototype.handleLetter = function(letter) {
     this.tries++;
     response = {
       type     : "fail",
-      letter   : "letter",
+      letter   : letter,
       finish   : (this.tries > MAX_TRIES),
       solution : (this.tries > MAX_TRIES) ? this.word : null
     };
@@ -424,7 +425,7 @@ Master.prototype.handleLetter = function(letter) {
                .c("body")
                .t(JSON.stringify(response));
   this.xmpp.send(stanza);
-  this.emit("response", response);
+  this.emit(response.type, response);
 };
 
 window.HangMan = {

@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <title>Chat</title>
-<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+<link rel="stylesheet" href="jquery.mobile-1.0.min.css" />
 <script type="text/javascript" src="jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="jquery.mobile-1.0.min.js"></script>
-<script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
-<script type="text/javascript" charset="utf-8" src="XMPPPhoneGapPlugin.js"></script>
 <script type="text/javascript" src="strophe.shim.js"></script>
 <script type="text/javascript" src="hangman.js"></script>
 <script type="text/javascript">
+document.addEventListener("deviceready", function() {
 $(function() {
   var hangman;
+  window.xmpp = new Strophe.Connection(window.plugins.xmpp);
 
   $("#loginButton").click(function() {
     var login = $("#login").val().trim();
@@ -47,11 +47,35 @@ $(function() {
   });
 
   function masterGame() {
-    hangman.on("response", function(data) {
-      console.log(data);
+    hangman.on("start", function(data) {
+      var masterWord = $("#masterWord");
+      var word = hangman.word;
+      for (var i = 0; i < word.length; i++) {
+        masterWord.append("<span> " + (word[i] === null ? "_" : word[i]) + " </span>")
+      }
+      word = data.word;
+      for (i = 0; i < word.length; i++) {
+        if (word[i] !== null) {
+          var span = masterWord.children()[i];
+          $(span).css("color", "green");
+        }
+      }
+    });
+
+    hangman.on("fail", function(data) {
+      var masterFail = $("#masterFail");
+      masterFail.append("<li>" + data.letter + "</li>");
+    });
+
+    hangman.on("success", function(data) {
+      var masterWord = $("#masterWord");
+      var positions = data.positions;
+      for (var i = 0; i < positions.length; i++) {
+        var span = masterWord.children()[positions[i]];
+        $(span).css("color", "green");
+      }
     });
   }
-
   function guesserGame() {
     hangman.on("start", function(data) {
       var guessWord = $("#guessWord");
@@ -61,6 +85,7 @@ $(function() {
         guessWord.append("<span> " + (word[i] === null ? "_" : word[i]) + " </span>")
       }
     });
+
     hangman.on("success", function(data) {
       var guessWord = $("#guessWord");
       var positions = data.positions;
@@ -72,6 +97,7 @@ $(function() {
         guessWord.children().css("color", "green");
       }
     });
+
     hangman.on("fail", function(data) {
       if (data.finish === true) {
         var guessWord = $("#guessWord");
@@ -79,10 +105,12 @@ $(function() {
         guessWord.text(solution.join(' '))
         guessWord.css("color", "red");
       } else {
-        
+        var guessFail = $("#guessFail");
+        guessFail.append("<li>" + data.letter + "</li>");
       }
     });
   }
+});
 });
 </script>
 </head> 
@@ -124,21 +152,27 @@ $(function() {
     <div data-role="header">
       <h1>Master</h1> 
     </div>
-    <input type="text" name="word" id="word" />
+
+    <div data-role="content">
+      <input type="text" name="word" id="word" />
+      <div id="masterWord"></div>
+      <ul id="masterFail"></ul>
+    </div>
   </div>
 
   <div id="guesserPage" data-role="page" data-theme="b">
     <div data-role="header">
       <h1>Guess</h1> 
     </div>
+
     <div data-role="content">
       <fieldset class="ui-grid-a" id="letters">
         <input id="letter" type="text" value="" maxlength="1" style="width:40px;display:inline" />
         <button id="play" data-inline="true">Play</button>
       </fieldset>
+      <div id="guessWord"></div>
+      <ul id="guessFail"></ul>
     </div>
-
-    <div id="guessWord"></div>
   </div>
 
 </body>
