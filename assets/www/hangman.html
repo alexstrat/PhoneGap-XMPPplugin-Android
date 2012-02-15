@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Chat</title>
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+<script type="text/javascript" src="jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="jquery.mobile-1.0.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+<script type="text/javascript" charset="utf-8" src="XMPPPhoneGapPlugin.js"></script>
+<script type="text/javascript" src="strophe.shim.js"></script>
+<script type="text/javascript" src="hangman.js"></script>
+<script type="text/javascript">
+$(function() {
+  var hangman;
+
+  $("#loginButton").click(function() {
+    var login = $("#login").val().trim();
+    var password = $("#password").val().trim();
+    $.mobile.loadingMessage = "Connection..."
+    $.mobile.showPageLoadingMsg();
+    window.xmpp.connect(login, password, function(status, error) {
+      if (status === Strophe.Status.CONNECTED) {
+        xmpp.send($pres().tree());
+        $.mobile.changePage($("#rolePage"));
+      }
+    });
+  });
+
+  $("#guesserButton").click(function() {
+    var opponent = $("#opponent").val().trim();
+    hangman = hangman || new HangMan.Guesser(xmpp);
+    hangman.start(opponent);
+    guesserGame();
+    $.mobile.changePage($("#guesserPage"));
+  });
+
+  $("#masterButton").click(function() {
+    var word = $("#opponent").val().trim();
+    hangman = hangman || new HangMan.Master(xmpp, word);
+    hangman.start(word);
+    masterGame();
+    $.mobile.changePage($("#masterPage"));
+  });
+
+  $("#play").click(function() {
+    hangman.play($("#letter").val());
+  });
+
+  function masterGame() {
+    hangman.on("response", function(data) {
+      console.log(data);
+    });
+  }
+
+  function guesserGame() {
+    hangman.on("start", function(data) {
+      var guessWord = $("#guessWord");
+      guessWord.empty();
+      var word = data.word;
+      for (var i = 0; i < word.length; i++) {
+        guessWord.append("<span> " + (word[i] === null ? "_" : word[i]) + " </span>")
+      }
+    });
+    hangman.on("success", function(data) {
+      var guessWord = $("#guessWord");
+      var positions = data.positions;
+      for (var i = 0; i < positions.length; i++) {
+        var span = guessWord.children()[positions[i]];
+        $(span).text(" " + data.letter + " ");
+      }
+      if (data.finish === true) {
+        guessWord.children().css("color", "green");
+      }
+    });
+    hangman.on("fail", function(data) {
+      if (data.finish === true) {
+        var guessWord = $("#guessWord");
+        var solution = data.solution.toUpperCase().split('');
+        guessWord.text(solution.join(' '))
+        guessWord.css("color", "red");
+      } else {
+        
+      }
+    });
+  }
+});
+</script>
+</head> 
+
+<body> 
+
+  <div id="homePage" data-role="page" data-role="page" data-theme="b">
+      <div data-role="header">
+          <h1>Chat</h1>
+      </div>
+
+      <div data-role="content">
+      <div data-role="fieldcontain">
+        <label for="login"><strong>Login</strong></label>
+        <input type="text" name="login" id="login" value="" />
+
+        <label for="password"><strong>Password</strong></label>
+        <input type="password" name="password" id="password" value=""  />
+        
+        <button id="loginButton" data-inline="true">Login</button>
+      </div>
+      </div>
+  </div>
+
+  <div id="rolePage" data-role="page" data-theme="b">
+    <div data-role="header">
+      <h1>Want to play ?</h1>
+    </div>
+
+    <fieldset>
+      <label for="opponent">Against ?</label>
+      <input type="text" value="" name="opponent" id="opponent" />
+      <button id="guesserButton" data-inline="true">Guesser</button>
+      <button id="masterButton" data-inline="true">Master</button>
+    </fieldset>
+  </div>
+
+  <div id="masterPage" data-role="page" data-theme="b">
+    <div data-role="header">
+      <h1>Master</h1> 
+    </div>
+    <input type="text" name="word" id="word" />
+  </div>
+
+  <div id="guesserPage" data-role="page" data-theme="b">
+    <div data-role="header">
+      <h1>Guess</h1> 
+    </div>
+    <div data-role="content">
+      <fieldset class="ui-grid-a" id="letters">
+        <input id="letter" type="text" value="" maxlength="1" style="width:40px;display:inline" />
+        <button id="play" data-inline="true">Play</button>
+      </fieldset>
+    </div>
+
+    <div id="guessWord"></div>
+  </div>
+
+</body>
+</html>
