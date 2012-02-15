@@ -43,20 +43,20 @@ public class XMPPPhoneGapPlugin extends Plugin implements PacketListener {
 		
 		switch(Action.valueOf(action)) {
 		case connect :
-			try {
+			try { 
 				String SERVER_HOST = data.getString(0);
 				int SERVER_PORT = data.getInt(1);
 				String SERVICE_NAME = data.getString(2);
 
 				
 				return this.actionConnect(SERVER_HOST, SERVER_PORT, SERVICE_NAME);
-				
+				 
 			} catch(JSONException e) {
 				return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
-			}
+			} 
 		case login :
 			try {
-				String login = data.getString(0);
+				String login = data.getString(0); 
 				String password = data.getString(1);
 				
 				return this.actionLogin(login, password);

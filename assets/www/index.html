@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="jquery.mobile-1.0.min.css" /> 
 <script src="jquery-1.7.1.min.js"></script> 
 <script src="jquery.mobile-1.0.min.js"></script>
-
+<script type="text/javascript" src="strophe.shim.js"></script>
 <script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
 <script type="text/javascript" charset="utf-8" src="XMPPPhoneGapPlugin.js"></script>
 <style>
@@ -33,6 +33,10 @@
         } 
 
         var xmpp = window.plugins.xmpp;
+        conn = new Strophe.Connection(xmpp);
+        Strophe.log = function(level, data) {
+          console.log(data);
+        }
 
         $("#loginButton").click(function() {
           var login = $("#login").val().trim();
@@ -40,17 +44,20 @@
 
           $.mobile.loadingMessage = "connection..."
           $.mobile.showPageLoadingMsg();
-          xmpp.connect("jabber.org", 5222, "jabber.org",
-            function() {
-              xmpp.login(login, password,
-                function() {
-                  $.mobile.changePage($("#chatPage"));
-                }, 
-                function(){}
-              );
-            },
-            function(){}
-          );
+
+          conn.connect(login, password, function(status) {
+            if(status == Strophe.Status.CONNECTED) {
+               $.mobile.changePage($("#chatPage"));
+               conn.send($pres());
+
+               conn.addHandler(function(stanza) {
+                if( !stanza.getElementsByTagName('body')[0]) {return true;}
+
+                $("#incomingMessages").append(messageHTML(stanza.getAttribute('from'), stanza.getElementsByTagName('body')[0].textContent));
+                 return true;
+               }, null, 'message', 'chat')
+            }
+          })
         });
 
         xmpp.onStanza(function(mess) {
@@ -62,10 +69,12 @@
           var recipient = $("#recipient").val().trim();
           var message = $("#message").val();
           $("#incomingMessages").append(messageHTML("ME", message));
-          stanza = ["<message type=\"chat\" to=\""+recipient+"\">",
-                    "<body>"+message+"</body>",
-                    "</message>"].join("");
-          xmpp.sendStanza(stanza);
+          conn.send($msg({to:recipient, type:'chat'}).c('body').t(message));
+
+          // stanza = ["<message type=\"chat\" to=\""+recipient+"\">",
+          //           "<body>"+message+"</body>",
+          //           "</message>"].join("");
+          // xmpp.sendStanza(stanza);
         });
  
       });
