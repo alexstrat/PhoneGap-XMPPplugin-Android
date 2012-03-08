@@ -1,11 +1,11 @@
 ## What is __that__ ?
 
 _That_ is an attempt to write an XMPP plugin for PhoneGap : it borrows the simplicity 
-of [strophe.js](strophe.im) API and the native XMPP implementation of [ASMACK](http://code.google.com/p/asmack).
+of [strophe.js](http://strophe.im) API and the native XMPP implementation of [ASMACK](http://code.google.com/p/asmack).
 
 Since the API is a shim of strophe.js one, any Strophe application or plugin should work with zero modification.
 
-Beyond this, _that_ was a student project for the MobServ course at [EURECOM](www.eurecom.fr). Thus _that_ is more a proof of concept than a complete and finished implementation. We won't continue the development but *we encourage motivated people to fork !*
+Beyond this, _that_ was a student project for the MobServ course at [EURECOM](http://www.eurecom.fr). Thus _that_ is more a proof of concept than a complete and finished implementation. We won't continue the development but *we encourage motivated people to fork !*
 
 ## Does it work ?
 
@@ -40,9 +40,5 @@ In your PhoneGap Android project :
 
 ## Authors
 
-- Alexandre Lachèze ([alexstrat])
-- Pierre Guilleminot ([jinroh])
-
-
-[jinroh]:https//github.com/jinroh
-[alexstrat]:https://github.com/alexstrat
+- Alexandre Lachèze ([alexstrat](https://github.com/alexstrat))
+- Pierre Guilleminot ([jinroh](https://github.com/jinroh)) 
